@@ -3,10 +3,12 @@
 #include <chrono> // delays
 #include <thread> // delays
 #include <windows.h > // input https://visualstudioclient.gallerycdn.vsassets.io/extensions/visualstudioclient/microsoftvisualstudio2017installerprojects/1.0.0/1620063166533/InstallerProjects.vsix
+#include <ctime> // random nummer generation
 
 class MatrixCode {
 	private:
-		unsigned int column = 1;
+		short column = 1;
+		short row = 0;
 		const char* sLiteral = "immutable";
 		char trail[5];
 		unsigned int speed = 0; // 1, 2, 3
@@ -22,31 +24,39 @@ class MatrixCode {
 			return newStr;
 		}
 	public:
-		void Initilise(int _column, int _speed)
+		void Initilise(short _column, int _speed)
 		{
 			column = _column;
 			speed = _speed;
 		}
+		void Step()
+		{
+			row = row + speed;
+		}
 };
 
-unsigned int colums = 20;
-unsigned int rows = 50;
+short colums = 20;
+short rows = 50;
 bool bUpdate = true;
-long unsigned int myClock = 0;
 unsigned int microseconds = 300;
+HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+COORD pos = { 32, 12 };
 
 int main()
 {
+	srand(time(NULL)); // sets the seed for RNG
+	pos = { (short)(abs(rand()) % 50), (short)(abs(rand()) % 30) };
+	SetConsoleCursorPosition(hConsole, pos);
+
 	while (!GetAsyncKeyState(VK_ESCAPE))
-	{		
-		if (myClock == 20) return 0;
-		std::cout << '!';
+	{
+		WriteConsole(hConsole, "!", 1, NULL, NULL);
 		std::this_thread::sleep_for(std::chrono::milliseconds(microseconds));
 	}
 	return 0;
 }
 
-void printChar(int _c, int _r, char _char)
+void printChar(short _x, short _y, char _char)
 {
 
 }
