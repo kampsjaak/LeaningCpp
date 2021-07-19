@@ -1,5 +1,8 @@
 #include <iostream>
-#include <string.h>
+#include <string.h> // string manipulation
+#include <chrono> // delays
+#include <thread> // delays
+#include <windows.h > // input https://visualstudioclient.gallerycdn.vsassets.io/extensions/visualstudioclient/microsoftvisualstudio2017installerprojects/1.0.0/1620063166533/InstallerProjects.vsix
 
 class MatrixCode {
 	private:
@@ -29,19 +32,16 @@ class MatrixCode {
 unsigned int colums = 20;
 unsigned int rows = 50;
 bool bUpdate = true;
-long unsigned int clock = 0;
-
+long unsigned int myClock = 0;
+unsigned int microseconds = 300;
 
 int main()
 {
-	
-	while (bUpdate)
-	{
-		if (clock % 10 == 0)
-		{
-
-		}
-		clock++;
+	while (!GetAsyncKeyState(VK_ESCAPE))
+	{		
+		if (myClock == 20) return 0;
+		std::cout << '!';
+		std::this_thread::sleep_for(std::chrono::milliseconds(microseconds));
 	}
 	return 0;
 }
