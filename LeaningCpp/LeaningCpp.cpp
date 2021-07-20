@@ -16,6 +16,10 @@ short screenRows = 50;
 unsigned int programUpdateStep = 300; //ms
 const char programLinesMax = 20;
 
+/*
+ - class properties are global/shared, this fucks up the OOP logic
+*/
+
 void PrintChar(short _x, short _y, char* _char)
 {
 	SetConsoleCursorPosition(hConsole, { _x, _y });
@@ -25,8 +29,8 @@ void PrintChar(short _x, short _y, char* _char)
 class MatrixCodeModel {
 public:
 	short column = 1;
-	short row = 0;
-	unsigned char speed = 0; // 1, 2, 3
+	short row = 0; 
+	unsigned char speed = 1; // 1, 2, 3
 	MatrixCodeModel() {};
 	MatrixCodeModel(const short& _column, const char& _speed) : column(_column), speed(_speed) {}
 
@@ -43,28 +47,24 @@ public:
 	MatrixCodeModel mcm;
 	MatrixCodeView() {};
 	MatrixCodeView(const MatrixCodeModel& _mcm) : mcm(_mcm) {}
-	std::string GenerateString()
+	void GenerateString()
 	{
-		std::string newStr = "mutable";
 		for (int i = 0; i < 5; i++)
 		{
-			newStr[i] = '1';
+			trail[i] = '1';
 		}
-		return newStr;
 	}
 	void Draw()
 	{
 		for (char i = 0; i < 5; i++)
 		{
-			// add likely hood for 'decay' as i increases
+			// add chance for 'decay' as i increases
 			PrintChar(mcm.column, mcm.row + i, &trail[i]);
 		}
 	}
 };
 
 MatrixCodeView programLines[programLinesMax];
-
-
 
 char GetRandomChar()
 {
@@ -75,12 +75,13 @@ void Initialise()
 {
 	for (char i = 0; i < programLinesMax; i++)
 	{
-		programLines[i] = MatrixCodeView(MatrixCodeModel(1, 1));
+		programLines[i] = MatrixCodeView(MatrixCodeModel( rand() % 50, rand() % 2 + 1 ));
 	}
 }
 
 void Draw()
 {
+	system("cls");
 	for (auto mcv : programLines)
 	{
 		mcv.Draw();
