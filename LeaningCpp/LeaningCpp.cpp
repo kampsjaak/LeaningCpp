@@ -16,11 +16,33 @@ short screenRows = 50;
 unsigned int programUpdateStep = 300; //ms
 const char programLinesMax = 20;
 
+void PrintChar(short _x, short _y, char* _char)
+{
+	SetConsoleCursorPosition(hConsole, { _x, _y });
+	WriteConsole(hConsole, _char, 1, NULL, NULL);
+}
+
+class MatrixCodeModel {
+public:
+	short column = 1;
+	short row = 0;
+	unsigned char speed = 0; // 1, 2, 3
+	MatrixCodeModel() {};
+	MatrixCodeModel(const short& _column, const char& _speed) : column(_column), speed(_speed) {}
+
+	void Step()
+	{
+		row = row + speed;
+	}
+};
+
 class MatrixCodeView {
 private: 
-	MatrixCodeModel mcm;
 	std::string trail = "abcde";
 public:
+	MatrixCodeModel mcm;
+	MatrixCodeView() {};
+	MatrixCodeView(const MatrixCodeModel& _mcm) : mcm(_mcm) {}
 	std::string GenerateString()
 	{
 		std::string newStr = "mutable";
@@ -40,29 +62,9 @@ public:
 	}
 };
 
-class MatrixCodeModel {
-public:
-	short column = 1;
-	short row = 0;
-	unsigned char speed = 0; // 1, 2, 3
-	void Initilise(short _column, char _speed) // make proper constructor method
-	{
-		column = _column;
-		speed = _speed;
-	}
-	void Step()
-	{
-		row = row + speed;
-	}
-};
-
 MatrixCodeView programLines[programLinesMax];
 
-void PrintChar(short _x, short _y, char* _char)
-{
-	SetConsoleCursorPosition(hConsole, { _x, _y });
-	WriteConsole(hConsole, _char, 1, NULL, NULL);
-}
+
 
 char GetRandomChar()
 {
@@ -73,15 +75,16 @@ void Initialise()
 {
 	for (char i = 0; i < programLinesMax; i++)
 	{
-		programLines[programLinesMax] = MatrixCodeModel();
+		programLines[i] = MatrixCodeView(MatrixCodeModel(1, 1));
 	}
 }
 
 void Draw()
 {
-	for (auto mcm : programLines)
+	for (auto mcv : programLines)
 	{
-		mcm.Draw();
+		mcv.Draw();
+		mcv.mcm.Step();
 	}
 }
 
@@ -94,7 +97,8 @@ int main()
 
 	while (!GetAsyncKeyState(VK_ESCAPE))
 	{
-		WriteConsole(hConsole, "!", 1, NULL, NULL);
+		//WriteConsole(hConsole, "!", 1, NULL, NULL);
+		Draw();
 		std::this_thread::sleep_for(std::chrono::milliseconds(programUpdateStep));
 	}
 	return 0;
