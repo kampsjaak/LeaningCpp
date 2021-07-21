@@ -11,14 +11,17 @@ COORD cursorPos = { 32, 12 };
 class MatrixCodeView;
 class MatrixCodeModel;
 
-short screenColums = 20;
-short screenRows = 50;
+short screenColums = 45;
+short screenRows = 30;
 unsigned int programUpdateStep = 300; //ms
 const char programLinesMax = 20;
+char strOut[1] = { 'S' };
+char* ptrOut = strOut;
 
 /*
  - class properties are global/shared, this fucks up the OOP logic
 */
+char GetRandomChar();
 
 void PrintChar(short _x, short _y, char* _char)
 {
@@ -45,24 +48,30 @@ private:
 	std::string trail = "abcde";
 public:
 	MatrixCodeModel mcm;
+	MatrixCodeModel* ptrMcm; // is this required? just guessing at this point. need better debugging...
 	MatrixCodeView() {};
-	MatrixCodeView(const MatrixCodeModel& _mcm) : mcm(_mcm) {}
+	MatrixCodeView(const MatrixCodeModel& _mcm) : mcm(_mcm) { ptrMcm = &mcm; }
 	void GenerateString()
 	{
 		for (int i = 0; i < 5; i++)
 		{
-			trail[i] = '1';
+			trail[i] = GetRandomChar();
 		}
 	}
 	void Draw()
 	{
 		for (char i = 0; i < 5; i++)
 		{
+			//if (mcm.row + i <= 0) return;
+
 			// add chance for 'decay' as i increases
-			PrintChar(mcm.column, mcm.row + i, &trail[i]);
+			strOut[0] = GetRandomChar(); 
+			//strOut[0] = trail.at(i);
+			PrintChar(mcm.column, mcm.row + i, ptrOut);
 		}
 	}
 };
+
 
 MatrixCodeView programLines[programLinesMax];
 
@@ -70,6 +79,7 @@ char GetRandomChar()
 {
 	return rand() % 255;
 }
+
 
 void Initialise()
 {
@@ -98,7 +108,6 @@ int main()
 
 	while (!GetAsyncKeyState(VK_ESCAPE))
 	{
-		//WriteConsole(hConsole, "!", 1, NULL, NULL);
 		Draw();
 		std::this_thread::sleep_for(std::chrono::milliseconds(programUpdateStep));
 	}
