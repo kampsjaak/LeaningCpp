@@ -1,5 +1,5 @@
 #include <iostream>
-#include <string.h> // string manipulation
+// #include <string.h> // string manipulation -> using std::string instead
 #include <chrono> // delays
 #include <thread> // delays
 #include <windows.h > // input https://visualstudioclient.gallerycdn.vsassets.io/extensions/visualstudioclient/microsoftvisualstudio2017installerprojects/1.0.0/1620063166533/InstallerProjects.vsix
@@ -61,7 +61,7 @@ public:
 	}
 	void Draw()
 	{
-		for (char i = 0; i < 5; i++)
+		for (char i = 0; i < trail.length(); i++)
 		{
 			if (mcm.row + i < 0 || mcm.row + i > screenRows) continue;
 			// add chance for 'decay' as i increases
