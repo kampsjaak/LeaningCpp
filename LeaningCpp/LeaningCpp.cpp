@@ -4,17 +4,37 @@
 #include <thread> // delays
 #include <windows.h > // input https://visualstudioclient.gallerycdn.vsassets.io/extensions/visualstudioclient/microsoftvisualstudio2017installerprojects/1.0.0/1620063166533/InstallerProjects.vsix
 #include <ctime> // random nummer generation
+#include <WinCon.h> // console colours
+
+#define BLACK			0
+#define BLUE			1
+#define GREEN			2
+#define CYAN			3
+#define RED				4
+#define MAGENTA			5
+#define BROWN			6
+#define LIGHTGRAY		7
+#define DARKGRAY		8
+#define LIGHTBLUE		9
+#define LIGHTGREEN		10
+#define LIGHTCYAN		11
+#define LIGHTRED		12
+#define LIGHTMAGENTA	13
+#define YELLOW			14
+#define WHITE			15
 
 HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-COORD cursorPos = { 32, 12 };
+COORD cursorPos = { 0, 0 };
 
 class MatrixCodeView;
 class MatrixCodeModel;
 
-short screenColums = 80;
-short screenRows = 24;
-unsigned int programUpdateStep = 400; //ms
-const char programLinesMax = 20;
+short screenColums = 119;
+short screenRows = 29;
+unsigned int programUpdateStep = 300; //ms
+const char programLinesMax = 25;
+const char lineLengthMin = 5;
+const char lineLengthMax = 10;
 char strOut[1] = { 'S' };
 char* ptrOut = strOut;
 
@@ -36,7 +56,7 @@ public:
 	{
 		column = rand() % screenColums;
 		speed = (rand() % 3) + 1;
-		if(!init) row = -(rand() % 4);
+		if(!init) row = -(lineLengthMax + (rand() % lineLengthMax));
 	}
 	void Step()
 	{
@@ -47,26 +67,35 @@ public:
 
 class MatrixCodeView {
 private: 
-	std::string trail = "abcde";
+	std::string trail = "abcdefghijklm";
 public:
 	MatrixCodeModel mcm;
 	MatrixCodeView() {};
 	MatrixCodeView(const MatrixCodeModel& _mcm) : mcm(_mcm) { };
 	void GenerateString()
 	{
-		for (int i = 0; i < 5; i++)
+		char strLength = trail.length();
+		for (int i = 0; i < strLength; i++)
 		{
-			trail[i] = GetRandomChar();
+			trail.at(i) = GetRandomChar();
 		}
 	}
 	void Draw()
 	{
-		for (char i = 0; i < trail.length(); i++)
+		//GenerateString();
+		char strLength = trail.length();
+		char half = round(strLength / 2);
+
+		for (char i = 0; i < strLength; i++)
 		{
 			if (mcm.row + i < 0 || mcm.row + i > screenRows) continue;
-			// add chance for 'decay' as i increases
-			// ---> strOut[0] = GetRandomChar();
+			
 			strOut[0] = trail.at(i);
+			if(i == strLength - 1) SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY);
+			else if(i == strLength - 2) SetConsoleTextAttribute(hConsole, CYAN);
+			else if (i < half) SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN);
+			else SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+			
 			PrintChar(mcm.column, mcm.row + i, ptrOut);
 		}
 	}
@@ -97,6 +126,7 @@ void Draw()
 		mcv.Draw();
 		mcv.mcm.Step();
 	}
+	SetConsoleCursorPosition(hConsole, cursorPos);
 }
 
 int main()
