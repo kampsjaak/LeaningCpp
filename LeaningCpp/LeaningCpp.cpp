@@ -27,12 +27,17 @@ COORD cursorPos = { 0, 0 };
 
 class MatrixCodeView;
 class MatrixCodeModel;
+class MatrixCodeStaticView;
+class MatrixCodeStaticModel;
 
-short screenColums = 119;
-short screenRows = 29;
+const short screenColums = 119;
+const short screenRows = 29;
+std::string clr = "";
+
+unsigned char tick = 0;
 unsigned int programUpdateStep = 150; //ms
 const char programLinesMax = 20;
-const char staticLinesMax = 50;
+const char staticLinesMax = 35;
 const char lineLengthMin = 5;
 const char lineLengthMax = 10;
 char strOut[1] = { 'S' };
@@ -42,6 +47,8 @@ std::string GetRandomChar();
 
 void PrintChar(short _x, short _y, char* _char)
 {
+	if (_x < 0 || _x > screenColums) return;
+	if (_y < 0 || _y > screenRows) return;
 	SetConsoleCursorPosition(hConsole, { _x, _y });
 	WriteConsole(hConsole, _char, 1, NULL, NULL);
 }
@@ -50,54 +57,61 @@ class MatrixCodeModel {
 public:
 	short column;
 	short row = rand() % screenRows;
-	unsigned char speed = 1; // 1, 2, 3, ...
 	MatrixCodeModel() { ReRoll(true); }
 	void ReRoll(bool init)
 	{
 		column = rand() % screenColums;
-		//speed = (rand() % 3) + 1;
-		speed = 1;
 		if(!init) row = -(lineLengthMax + (rand() % lineLengthMax));
 	}
-	void Step(bool bMoving)
+	void Step()
 	{
-		if (bMoving)
-		{
-			if (row > screenRows) ReRoll(false);
-			else row = row + speed;
-		}
+		if (row > screenRows) ReRoll(false);
+		else row++;
 	}
 };
 
 class MatrixCodeView {
 private: 
-	std::string trail = "abcdefghijklm";
+	std::string trailA = "abcdefghijklm";
+	std::string trailB = "abcdefghijklm";
+	std::string trailC = "abcdefghijklm";
+	std::string trailD = "abcdefghijklm";
 public:
 	MatrixCodeModel mcm;
 	MatrixCodeView() {};
-	MatrixCodeView(const MatrixCodeModel& _mcm) : mcm(_mcm) { };
-	void GenerateString()
+	MatrixCodeView(const MatrixCodeModel& _mcm) : mcm(_mcm) { Initialise();  };
+	std::string GenerateString(char len)
 	{
-		char strLength = trail.length();
-		trail.clear();
 		std::string newStr = "";
-		for (int i = 0; i < strLength; i++)
+		for (int i = 0; i < len; i++)
 		{
 			newStr.append(GetRandomChar());
 		}
-		trail = newStr;
+		return newStr;
+	}
+	void Initialise()
+	{	// pre-generate strings, much fasters than per each character
+		trailA = GenerateString(trailA.length());
+		trailB = GenerateString(trailB.length());
+		trailC = GenerateString(trailC.length());
+		trailD = GenerateString(trailD.length());
 	}
 	void Draw()
 	{
-		GenerateString();
-		char strLength = trail.length();
+		//GenerateString();
+		char n = tick % 4;
+		std::string local[4] = { trailA, trailB, trailC, trailD };
+		char strLength = local[n].length();
 		char half = round(strLength / 2);
+
+		strOut[0] = ' ';
+		PrintChar(mcm.column, mcm.row - 1, ptrOut);
 
 		for (char i = strLength - 1; i >= 0; i--)
 		{
 			if (mcm.row + i < 0 || mcm.row + i > screenRows) continue;
 			
-			strOut[0] = trail.at(i);
+			strOut[0] = local[n].at(i);
 			if(i == strLength - 1) SetConsoleTextAttribute(hConsole, WHITE);
 			else if(i == strLength - 2) SetConsoleTextAttribute(hConsole, CYAN);
 			//else if (i < half) SetConsoleTextAttribute(hConsole, GREEN);
@@ -108,37 +122,48 @@ public:
 	}
 };
 
+class MatrixCodeStaticModel {
+public:
+	short column;
+	short row = rand() % screenRows;
+	MatrixCodeStaticModel() { ReRoll(true); }
+	void ReRoll(bool init)
+	{
+		column = rand() % screenColums;
+		if (!init) row = -(lineLengthMax + (rand() % lineLengthMax));
+	}
+	void Step()
+	{
+		// do something	
+	}
+};
+
 // static non moving text (should be mostly mulitple columns?)
 class MatrixCodeStaticView {
 private:
 	std::string trail = "abcdefghijklm";
 public:
-	MatrixCodeModel mcm;
+	MatrixCodeStaticModel mcsm;
 	MatrixCodeStaticView() {};
-	MatrixCodeStaticView(const MatrixCodeModel& _mcm) : mcm(_mcm) { };
-	void GenerateString() // inherit this? feels kinda hacky to have two views
+	MatrixCodeStaticView(const MatrixCodeStaticModel& _mcsm) : mcsm(_mcsm) { };
+	/*void GenerateString() 
 	{
-		char strLength = trail.length();
 		trail.clear();
 		std::string newStr = "";
-		for (int i = 0; i < strLength; i++)
+		for (int i = 0; i < trail.length(); i++)
 		{
 			newStr.append(GetRandomChar());
 		}
 		trail = newStr;
-	}
+	}*/
 	void Draw()
 	{
-		//GenerateString();
-
+		//GenerateString(); nth update?
 		for (char i = trail.length() - 1; i >= 0; i--)
 		{
-			if (mcm.row + i < 0 || mcm.row + i > screenRows) continue;
-
 			strOut[0] = trail.at(i);
 			SetConsoleTextAttribute(hConsole, GREEN);
-
-			PrintChar(mcm.column, mcm.row + i, ptrOut);
+			PrintChar(mcsm.column, mcsm.row + i, ptrOut);
 		}
 	}
 };
@@ -157,26 +182,36 @@ std::string GetRandomChar()
 void Initialise()
 {
 	srand(time(NULL)); // sets the seed for RNG
+	
+	std::string str = " ";
+	for (unsigned int i = 0; i < screenColums * screenRows; i++)
+	{
+		clr.append(str);
+	}
 
 	for (char i = 0; i < programLinesMax; i++) programLines[i] = MatrixCodeView(MatrixCodeModel());
-
-	for (char i = 0; i < staticLinesMax; i++) staticLines[i] = MatrixCodeStaticView(MatrixCodeModel());
+	for (char i = 0; i < staticLinesMax; i++) staticLines[i] = MatrixCodeStaticView(MatrixCodeStaticModel());
+}
+ 
+void Cls()
+{
+	// cls is a hack, try own cls or manage characters per update
 }
 
 void Draw()
 {
-	system("cls");
-	for (MatrixCodeView &mcv : programLines)
-	{
-		mcv.Draw();
-		mcv.mcm.Step(true);
-	}
+	Cls();
 	for (MatrixCodeStaticView& mcsv : staticLines)
 	{
 		mcsv.Draw();
-		mcsv.mcm.Step(false);
+		//mcsv.mcsm.Step();
 	}
-	
+	for (MatrixCodeView& mcv : programLines)
+	{
+		mcv.Draw();
+		mcv.mcm.Step();
+	}
+
 	SetConsoleCursorPosition(hConsole, cursorPos);
 }
 
@@ -188,6 +223,7 @@ int main()
 	{
 		Draw();
 		std::this_thread::sleep_for(std::chrono::milliseconds(programUpdateStep));
+		tick++;
 	}
 	system("cls");
 	return 0;
