@@ -33,9 +33,10 @@ class MatrixCodeStaticModel;
 const short screenColums = 119;
 const short screenRows = 29;
 std::string clr = "";
+int randomArray[10];
 
 unsigned char tick = 0;
-unsigned int programUpdateStep = 150; //ms
+unsigned int programUpdateStep = 100; //ms
 const char programLinesMax = 20;
 const char staticLinesMax = 35;
 const char lineLengthMin = 5;
@@ -45,6 +46,25 @@ char* ptrOut = strOut;
 
 std::string GetRandomChar();
 
+unsigned char cycle = 0;
+int temp;
+int RandomInt()
+{
+	return rand();
+	
+	temp = randomArray[cycle % 10];
+	cycle++;
+	
+	switch (cycle % 1)
+	{
+	case 1:
+		return temp >> 1;
+	case 0:
+		return temp;
+	}
+	return temp;
+}
+
 void PrintChar(short _x, short _y, char* _char)
 {
 	if (_x < 0 || _x > screenColums) return;
@@ -53,15 +73,26 @@ void PrintChar(short _x, short _y, char* _char)
 	WriteConsole(hConsole, _char, 1, NULL, NULL);
 }
 
+std::string GenerateString(std::string& _str)
+{
+	std::string newStr = "";
+	for (unsigned int i = 0; i < _str.length(); i++)
+	{
+		newStr.append(GetRandomChar());
+	}
+	return newStr;
+}
+
 class MatrixCodeModel {
 public:
 	short column;
-	short row = rand() % screenRows;
+	short row = RandomInt() % screenRows;
 	MatrixCodeModel() { ReRoll(true); }
 	void ReRoll(bool init)
 	{
-		column = rand() % screenColums;
-		if(!init) row = -(lineLengthMax + (rand() % lineLengthMax));
+		int random = RandomInt();
+		column = random % screenColums;
+		if(!init) row = -(lineLengthMax + (random % lineLengthMax));
 	}
 	void Step()
 	{
@@ -69,6 +100,8 @@ public:
 		else row++;
 	}
 };
+
+const char* lols = " ";
 
 class MatrixCodeView {
 private: 
@@ -80,31 +113,23 @@ public:
 	MatrixCodeModel mcm;
 	MatrixCodeView() {};
 	MatrixCodeView(const MatrixCodeModel& _mcm) : mcm(_mcm) { Initialise();  };
-	std::string GenerateString(char len)
-	{
-		std::string newStr = "";
-		for (int i = 0; i < len; i++)
-		{
-			newStr.append(GetRandomChar());
-		}
-		return newStr;
-	}
+	
 	void Initialise()
 	{	// pre-generate strings, much fasters than per each character
-		trailA = GenerateString(trailA.length());
-		trailB = GenerateString(trailB.length());
-		trailC = GenerateString(trailC.length());
-		trailD = GenerateString(trailD.length());
+		trailA = GenerateString(trailA);
+		trailB = GenerateString(trailB);
+		trailC = GenerateString(trailC);
+		trailD = GenerateString(trailD);
 	}
 	void Draw()
 	{
-		//GenerateString();
 		char n = tick % 4;
 		std::string local[4] = { trailA, trailB, trailC, trailD };
 		char strLength = local[n].length();
 		char half = round(strLength / 2);
-
-		strOut[0] = ' ';
+		
+		std::string empty = " ";
+		strOut[0] = empty.at(0);
 		PrintChar(mcm.column, mcm.row - 1, ptrOut);
 
 		for (char i = strLength - 1; i >= 0; i--)
@@ -125,12 +150,12 @@ public:
 class MatrixCodeStaticModel {
 public:
 	short column;
-	short row = rand() % screenRows;
+	short row = RandomInt() % screenRows;
 	MatrixCodeStaticModel() { ReRoll(true); }
 	void ReRoll(bool init)
 	{
-		column = rand() % screenColums;
-		if (!init) row = -(lineLengthMax + (rand() % lineLengthMax));
+		column = RandomInt() % screenColums;
+		if (!init) row = -(lineLengthMax + (RandomInt() % lineLengthMax));
 	}
 	void Step()
 	{
@@ -145,20 +170,13 @@ private:
 public:
 	MatrixCodeStaticModel mcsm;
 	MatrixCodeStaticView() {};
-	MatrixCodeStaticView(const MatrixCodeStaticModel& _mcsm) : mcsm(_mcsm) { };
-	/*void GenerateString() 
+	MatrixCodeStaticView(const MatrixCodeStaticModel& _mcsm) : mcsm(_mcsm) { Initialise();  };
+	void Initialise()
 	{
-		trail.clear();
-		std::string newStr = "";
-		for (int i = 0; i < trail.length(); i++)
-		{
-			newStr.append(GetRandomChar());
-		}
-		trail = newStr;
-	}*/
+		trail = GenerateString(trail);
+	}
 	void Draw()
 	{
-		//GenerateString(); nth update?
 		for (char i = trail.length() - 1; i >= 0; i--)
 		{
 			strOut[0] = trail.at(i);
@@ -179,10 +197,16 @@ std::string GetRandomChar()
 	return str;
 }
 
+
+
 void Initialise()
 {
 	srand(time(NULL)); // sets the seed for RNG
-	
+	for (int r : randomArray)
+	{
+		r = rand();
+	}
+
 	std::string str = " ";
 	for (unsigned int i = 0; i < screenColums * screenRows; i++)
 	{
