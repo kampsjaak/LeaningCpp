@@ -30,8 +30,9 @@ class MatrixCodeModel;
 
 short screenColums = 119;
 short screenRows = 29;
-unsigned int programUpdateStep = 300; //ms
-const char programLinesMax = 30;
+unsigned int programUpdateStep = 150; //ms
+const char programLinesMax = 20;
+const char staticLinesMax = 50;
 const char lineLengthMin = 5;
 const char lineLengthMax = 10;
 char strOut[1] = { 'S' };
@@ -58,10 +59,13 @@ public:
 		speed = 1;
 		if(!init) row = -(lineLengthMax + (rand() % lineLengthMax));
 	}
-	void Step()
+	void Step(bool bMoving)
 	{
-		if (row > screenRows) ReRoll(false);
-		else row = row + speed;
+		if (bMoving)
+		{
+			if (row > screenRows) ReRoll(false);
+			else row = row + speed;
+		}
 	}
 };
 
@@ -96,7 +100,7 @@ public:
 			strOut[0] = trail.at(i);
 			if(i == strLength - 1) SetConsoleTextAttribute(hConsole, WHITE);
 			else if(i == strLength - 2) SetConsoleTextAttribute(hConsole, CYAN);
-			else if (i < half) SetConsoleTextAttribute(hConsole, GREEN);
+			//else if (i < half) SetConsoleTextAttribute(hConsole, GREEN);
 			else SetConsoleTextAttribute(hConsole, LIGHTGREEN);
 			
 			PrintChar(mcm.column, mcm.row + i, ptrOut);
@@ -104,7 +108,43 @@ public:
 	}
 };
 
+// static non moving text (should be mostly mulitple columns?)
+class MatrixCodeStaticView {
+private:
+	std::string trail = "abcdefghijklm";
+public:
+	MatrixCodeModel mcm;
+	MatrixCodeStaticView() {};
+	MatrixCodeStaticView(const MatrixCodeModel& _mcm) : mcm(_mcm) { };
+	void GenerateString() // inherit this? feels kinda hacky to have two views
+	{
+		char strLength = trail.length();
+		trail.clear();
+		std::string newStr = "";
+		for (int i = 0; i < strLength; i++)
+		{
+			newStr.append(GetRandomChar());
+		}
+		trail = newStr;
+	}
+	void Draw()
+	{
+		//GenerateString();
+
+		for (char i = trail.length() - 1; i >= 0; i--)
+		{
+			if (mcm.row + i < 0 || mcm.row + i > screenRows) continue;
+
+			strOut[0] = trail.at(i);
+			SetConsoleTextAttribute(hConsole, GREEN);
+
+			PrintChar(mcm.column, mcm.row + i, ptrOut);
+		}
+	}
+};
+
 MatrixCodeView programLines[programLinesMax];
+MatrixCodeStaticView staticLines[staticLinesMax];
 
 std::string GetRandomChar()
 {
@@ -118,10 +158,9 @@ void Initialise()
 {
 	srand(time(NULL)); // sets the seed for RNG
 
-	for (char i = 0; i < programLinesMax; i++)
-	{
-		programLines[i] = MatrixCodeView(MatrixCodeModel());
-	}
+	for (char i = 0; i < programLinesMax; i++) programLines[i] = MatrixCodeView(MatrixCodeModel());
+
+	for (char i = 0; i < staticLinesMax; i++) staticLines[i] = MatrixCodeStaticView(MatrixCodeModel());
 }
 
 void Draw()
@@ -130,8 +169,14 @@ void Draw()
 	for (MatrixCodeView &mcv : programLines)
 	{
 		mcv.Draw();
-		mcv.mcm.Step();
+		mcv.mcm.Step(true);
 	}
+	for (MatrixCodeStaticView& mcsv : staticLines)
+	{
+		mcsv.Draw();
+		mcsv.mcm.Step(false);
+	}
+	
 	SetConsoleCursorPosition(hConsole, cursorPos);
 }
 
