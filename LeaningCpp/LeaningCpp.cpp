@@ -203,17 +203,41 @@ MatrixCodeStaticView staticLines[staticLinesMax];
 std::string GetRandomChar()
 {
 	std::string str = "!";
-	str.at(0) = (char)(rand() % 221 + 33);
-	// 
-	if (	((char)str.at(0) == (char)127)
-		||	((char)str.at(0) == (char)129)
-		||	((char)str.at(0) == (char)141)
-		||	((char)str.at(0) == (char)143)
-		||	((char)str.at(0) == (char)144)
-		||	((char)str.at(0) == (char)157)
-		||	((char)str.at(0) == (char)160)
-		||	((char)str.at(0) == (char)173)
-		) { str.at(0) = (char)128; }
+	str.at(0) = (unsigned char)(rand() % 221 + 33);
+	if ((str.at(0) == (unsigned char)127)
+		|| (str.at(0) == (unsigned char)128)
+		|| (str.at(0) == (unsigned char)129)
+		|| (str.at(0) == (unsigned char)130)
+		|| (str.at(0) == (unsigned char)131)
+		|| (str.at(0) == (unsigned char)132)
+		|| (str.at(0) == (unsigned char)133)
+		|| (str.at(0) == (unsigned char)134)
+		|| (str.at(0) == (unsigned char)135)
+		|| (str.at(0) == (unsigned char)136)
+		|| (str.at(0) == (unsigned char)137)
+		|| (str.at(0) == (unsigned char)138)
+		|| (str.at(0) == (unsigned char)139)
+		|| (str.at(0) == (unsigned char)140)
+		|| (str.at(0) == (unsigned char)141)
+		|| (str.at(0) == (unsigned char)142)
+		|| (str.at(0) == (unsigned char)143)
+		|| (str.at(0) == (unsigned char)144)
+		|| (str.at(0) == (unsigned char)145)
+		|| (str.at(0) == (unsigned char)146)
+		|| (str.at(0) == (unsigned char)147)
+		|| (str.at(0) == (unsigned char)148)
+		|| (str.at(0) == (unsigned char)149)
+		|| (str.at(0) == (unsigned char)150)
+		|| (str.at(0) == (unsigned char)151)
+		|| (str.at(0) == (unsigned char)152)
+		|| (str.at(0) == (unsigned char)153)
+		|| (str.at(0) == (unsigned char)154)
+		|| (str.at(0) == (unsigned char)155)
+		|| (str.at(0) == (unsigned char)156)
+		|| (str.at(0) == (unsigned char)157)
+		|| (str.at(0) == (unsigned char)158)
+		|| (str.at(0) == (unsigned char)159)
+		) { str.at(0) = (unsigned char)55; }
 	return str;
 }
 
@@ -249,13 +273,16 @@ void Draw()
 	//	mcv.mcm.Step();
 	//}
 
+
+
 	SetConsoleCursorPosition(hConsole, cursorPos);
 }
 
 int main()
 {
+	system("cls");
 	Initialise();
-	
+
 	while (!GetAsyncKeyState(VK_ESCAPE))
 	{
 		Draw();
