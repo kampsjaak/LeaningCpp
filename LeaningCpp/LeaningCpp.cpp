@@ -160,26 +160,16 @@ public:
 	MatrixCodeStaticModel() { ReRoll(true); }
 	void ReRoll(bool init)
 	{
-		speed = (RandomInt() % 2) + 1;
+		speed = (RandomInt() % 4) + 3;
 		column = RandomInt() % screenColums - (lineLengthMax / 2); // the columns cannot be random, use an index from the constructor
-		if (!init)
-		{
-			row = -(lineLengthMax + (RandomInt() % lineLengthMax));
-			entrophy = (RandomInt() % 12) + 5 + lineLengthMax;
-		}
-		else
-		{
-			row = RandomInt() % screenRows;
-			entrophy = RandomInt() % 10;
-		}
+		row = RandomInt() % screenRows;
+		entrophy = lineLengthMax + (RandomInt() % 12);
+		return;
 	}
 	void Step()
 	{
-		if (tick % speed)
-		{
-			entrophy--;
-			if (entrophy < 0) ReRoll(false);
-		}
+		if (tick % speed == 0) entrophy--;
+		if (entrophy < 0) ReRoll(false);
 	}
 };
 
@@ -238,25 +228,21 @@ void Initialise()
 	for (char i = 0; i < programLinesMax; i++) programLines[i] = MatrixCodeView(MatrixCodeModel());
 	for (char i = 0; i < staticLinesMax; i++) staticLines[i] = MatrixCodeStaticView(MatrixCodeStaticModel());
 }
- 
-void Cls()
-{
-	// cls is a hack, try own cls or manage characters per update
-}
 
 void Draw()
 {
-	Cls();
+	// background
 	for (MatrixCodeStaticView& mcsv : staticLines)
 	{
 		mcsv.Draw();
 		mcsv.mcsm.Step();
 	}
-	for (MatrixCodeView& mcv : programLines)
-	{
-		mcv.Draw();
-		mcv.mcm.Step();
-	}
+	// foreground
+	//for (MatrixCodeView& mcv : programLines)
+	//{
+	//	mcv.Draw();
+	//	mcv.mcm.Step();
+	//}
 
 	SetConsoleCursorPosition(hConsole, cursorPos);
 }
