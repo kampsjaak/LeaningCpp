@@ -33,10 +33,11 @@ class MatrixCodeStaticModel;
 const short screenColums = 119;
 const short screenRows = 29;
 std::string clr = "";
+std::string space = " ";
 int randomArray[10];
 
 unsigned char tick = 0;
-unsigned int programUpdateStep = 100; //ms
+unsigned int programUpdateStep = 75; //ms
 const char programLinesMax = 20;
 const char staticLinesMax = 35;
 const char lineLengthMin = 5;
@@ -52,6 +53,9 @@ int RandomInt()
 {
 	return rand();
 	
+	//random enough
+	//add randoms together
+	//substract randoms
 	temp = randomArray[cycle % 10];
 	cycle++;
 	
@@ -101,7 +105,7 @@ public:
 	}
 };
 
-const char* lols = " ";
+//const char* lols = " ";
 
 class MatrixCodeView {
 private: 
@@ -150,16 +154,32 @@ public:
 class MatrixCodeStaticModel {
 public:
 	short column;
-	short row = RandomInt() % screenRows;
+	short row;
+	short entrophy;
+	short speed;
 	MatrixCodeStaticModel() { ReRoll(true); }
 	void ReRoll(bool init)
 	{
-		column = RandomInt() % screenColums;
-		if (!init) row = -(lineLengthMax + (RandomInt() % lineLengthMax));
+		speed = (RandomInt() % 2) + 1;
+		column = RandomInt() % screenColums - (lineLengthMax / 2); // the columns cannot be random, use an index from the constructor
+		if (!init)
+		{
+			row = -(lineLengthMax + (RandomInt() % lineLengthMax));
+			entrophy = (RandomInt() % 12) + 5 + lineLengthMax;
+		}
+		else
+		{
+			row = RandomInt() % screenRows;
+			entrophy = RandomInt() % 10;
+		}
 	}
 	void Step()
 	{
-		// do something	
+		if (tick % speed)
+		{
+			entrophy--;
+			if (entrophy < 0) ReRoll(false);
+		}
 	}
 };
 
@@ -174,14 +194,16 @@ public:
 	void Initialise()
 	{
 		trail = GenerateString(trail);
+		mcsm.ReRoll(true);
 	}
 	void Draw()
 	{
-		for (char i = trail.length() - 1; i >= 0; i--)
+		for(char i = 0; i < trail.length(); i++)
 		{
-			strOut[0] = trail.at(i);
+			if (mcsm.entrophy > i) strOut[0] = trail.at(i);
+			else strOut[0] = space.at(0);
 			SetConsoleTextAttribute(hConsole, GREEN);
-			PrintChar(mcsm.column, mcsm.row + i, ptrOut);
+			PrintChar(mcsm.column, mcsm.row - i, ptrOut);
 		}
 	}
 };
@@ -207,10 +229,10 @@ void Initialise()
 		r = rand();
 	}
 
-	std::string str = " ";
+	
 	for (unsigned int i = 0; i < screenColums * screenRows; i++)
 	{
-		clr.append(str);
+		clr.append(space);
 	}
 
 	for (char i = 0; i < programLinesMax; i++) programLines[i] = MatrixCodeView(MatrixCodeModel());
@@ -228,7 +250,7 @@ void Draw()
 	for (MatrixCodeStaticView& mcsv : staticLines)
 	{
 		mcsv.Draw();
-		//mcsv.mcsm.Step();
+		mcsv.mcsm.Step();
 	}
 	for (MatrixCodeView& mcv : programLines)
 	{
