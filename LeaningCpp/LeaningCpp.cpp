@@ -1,5 +1,4 @@
 #include <iostream>
-// #include <string.h> // string manipulation -> using std::string instead
 #include <chrono> // delays
 #include <thread> // delays
 #include <windows.h > // input https://visualstudioclient.gallerycdn.vsassets.io/extensions/visualstudioclient/microsoftvisualstudio2017installerprojects/1.0.0/1620063166533/InstallerProjects.vsix
@@ -129,8 +128,8 @@ public:
 	{
 		char n = tick % 4;
 		std::string local[4] = { trailA, trailB, trailC, trailD };
-		char strLength = local[n].length();
-		char half = round(strLength / 2);
+		unsigned char strLength = (unsigned char)local[n].length();
+		char half = (char)round(strLength / 2);
 		
 		std::string empty = " ";
 		strOut[0] = empty.at(0);
@@ -143,7 +142,6 @@ public:
 			strOut[0] = local[n].at(i);
 			if(i == strLength - 1) SetConsoleTextAttribute(hConsole, WHITE);
 			else if(i == strLength - 2) SetConsoleTextAttribute(hConsole, CYAN);
-			//else if (i < half) SetConsoleTextAttribute(hConsole, GREEN);
 			else SetConsoleTextAttribute(hConsole, LIGHTGREEN);
 			
 			PrintChar(mcm.column, mcm.row + i, ptrOut);
@@ -153,16 +151,17 @@ public:
 
 class MatrixCodeStaticModel {
 public:
-	short column;
-	short row;
-	short entrophy;
-	short speed;
-	MatrixCodeStaticModel() { ReRoll(true); }
+	short column = 0;
+	short row = 0;
+	short entrophy = 0;
+	short speed = 0;
+	MatrixCodeStaticModel() {};
+	MatrixCodeStaticModel(const short& _column) : column(_column) { ReRoll(true); }
 	void ReRoll(bool init)
 	{
-		speed = (RandomInt() % 4) + 3;
-		column = RandomInt() % screenColums - (lineLengthMax / 2); // the columns cannot be random, use an index from the constructor
 		row = RandomInt() % screenRows;
+		speed = (RandomInt() % 4) + 3;
+		//column = RandomInt() % screenColums - (lineLengthMax / 2); // the columns cannot be random, use an index from the constructor
 		entrophy = lineLengthMax + (RandomInt() % 12);
 		return;
 	}
@@ -173,7 +172,6 @@ public:
 	}
 };
 
-// static non moving text (should be mostly mulitple columns?)
 class MatrixCodeStaticView {
 private:
 	std::string trail = "abcdefghijklm";
@@ -188,9 +186,10 @@ public:
 	}
 	void Draw()
 	{
-		for(char i = 0; i < trail.length(); i++)
+		size_t tLen = trail.length();
+		for(unsigned char i = 0; i < tLen; i++)
 		{
-			if (mcsm.entrophy > i) strOut[0] = trail.at(i);
+			if (mcsm.entrophy > i && i < tLen) strOut[0] = trail.at(i);
 			else strOut[0] = space.at(0);
 			SetConsoleTextAttribute(hConsole, GREEN);
 			PrintChar(mcsm.column, mcsm.row - i, ptrOut);
@@ -205,28 +204,34 @@ std::string GetRandomChar()
 {
 	std::string str = "!";
 	str.at(0) = (char)(rand() % 221 + 33);
-	if ((char)str.at(0) == (char)127) { str.at(0) = (char)128; }
+	// 
+	if (	((char)str.at(0) == (char)127)
+		||	((char)str.at(0) == (char)129)
+		||	((char)str.at(0) == (char)141)
+		||	((char)str.at(0) == (char)143)
+		||	((char)str.at(0) == (char)144)
+		||	((char)str.at(0) == (char)157)
+		||	((char)str.at(0) == (char)160)
+		||	((char)str.at(0) == (char)173)
+		) { str.at(0) = (char)128; }
 	return str;
 }
 
-
-
 void Initialise()
 {
-	srand(time(NULL)); // sets the seed for RNG
+	srand((unsigned int)time(NULL)); // sets the seed for RNG
 	for (int r : randomArray)
 	{
 		r = rand();
 	}
 
-	
 	for (unsigned int i = 0; i < screenColums * screenRows; i++)
 	{
 		clr.append(space);
 	}
 
 	for (char i = 0; i < programLinesMax; i++) programLines[i] = MatrixCodeView(MatrixCodeModel());
-	for (char i = 0; i < staticLinesMax; i++) staticLines[i] = MatrixCodeStaticView(MatrixCodeStaticModel());
+	for (char i = 0; i < staticLinesMax; i++) staticLines[i] = MatrixCodeStaticView(MatrixCodeStaticModel((short)i));
 }
 
 void Draw()
