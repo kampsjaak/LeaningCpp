@@ -170,7 +170,7 @@ public:
 	void Step()
 	{
 		if (tick % speed == 0) entrophy--;
-		if (entrophy < 0) ReRoll(false);
+		if (entrophy < -10) ReRoll(false);
 	}
 };
 
@@ -220,44 +220,23 @@ public:
 MatrixCodeView programLines[programLinesMax];
 MatrixCodeStaticView staticLines[staticLinesMax];
 
+bool IsLegalUnsignedChar(unsigned char _c)
+{
+	unsigned char illegal[] = { 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 
+		139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155,
+		156, 157, 158, 159 };
+
+	for (unsigned char i : illegal)
+		if (i == _c) return false;
+	
+	return true;
+}
+
 std::string GetRandomChar()
 {
 	std::string str = "!";
 	str.at(0) = (unsigned char)(rand() % 221 + 33);
-	if ((str.at(0) == (unsigned char)127)
-		|| (str.at(0) == (unsigned char)128)
-		|| (str.at(0) == (unsigned char)129)
-		|| (str.at(0) == (unsigned char)130)
-		|| (str.at(0) == (unsigned char)131)
-		|| (str.at(0) == (unsigned char)132)
-		|| (str.at(0) == (unsigned char)133)
-		|| (str.at(0) == (unsigned char)134)
-		|| (str.at(0) == (unsigned char)135)
-		|| (str.at(0) == (unsigned char)136)
-		|| (str.at(0) == (unsigned char)137)
-		|| (str.at(0) == (unsigned char)138)
-		|| (str.at(0) == (unsigned char)139)
-		|| (str.at(0) == (unsigned char)140)
-		|| (str.at(0) == (unsigned char)141)
-		|| (str.at(0) == (unsigned char)142)
-		|| (str.at(0) == (unsigned char)143)
-		|| (str.at(0) == (unsigned char)144)
-		|| (str.at(0) == (unsigned char)145)
-		|| (str.at(0) == (unsigned char)146)
-		|| (str.at(0) == (unsigned char)147)
-		|| (str.at(0) == (unsigned char)148)
-		|| (str.at(0) == (unsigned char)149)
-		|| (str.at(0) == (unsigned char)150)
-		|| (str.at(0) == (unsigned char)151)
-		|| (str.at(0) == (unsigned char)152)
-		|| (str.at(0) == (unsigned char)153)
-		|| (str.at(0) == (unsigned char)154)
-		|| (str.at(0) == (unsigned char)155)
-		|| (str.at(0) == (unsigned char)156)
-		|| (str.at(0) == (unsigned char)157)
-		|| (str.at(0) == (unsigned char)158)
-		|| (str.at(0) == (unsigned char)159)
-		) { str.at(0) = (unsigned char)55; }
+	if (!IsLegalUnsignedChar(str.at(0))) str.at(0) = (unsigned char)55;
 	return str;
 }
 
