@@ -30,25 +30,28 @@ class MatrixCodeModel;
 class MatrixCodeStaticView;
 class MatrixCodeStaticModel;
 
-const short screenColums = 119;
-const short screenRows = 29;
+const unsigned char programLinesMax = 20;
+const unsigned char staticLinesMax = 35;
+const unsigned char lineLengthMin = 5;
+const unsigned char lineLengthMax = 10;
+const unsigned char illegal[] = { 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138,
+		139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155,
+		156, 157, 158, 159 };
+const unsigned short screenColums = 119;
+const unsigned short screenRows = 29;
+const unsigned int programUpdateStep = 75; //ms
+
 std::string clr = "";
 std::string space = " ";
-int randomArray[10];
-
-unsigned char tick = 0;
-unsigned int programUpdateStep = 75; //ms
-const char programLinesMax = 20;
-const char staticLinesMax = 35;
-const char lineLengthMin = 5;
-const char lineLengthMax = 10;
 char strOut[1] = { 'S' };
 char* ptrOut = strOut;
+unsigned char tick = 0;
+unsigned char cycle = 0;
+int randomArray[10];
+int temp;
 
 std::string GetRandomChar();
 
-unsigned char cycle = 0;
-int temp;
 int RandomInt()
 {
 	return rand();
@@ -105,8 +108,6 @@ public:
 	}
 };
 
-//const char* lols = " ";
-
 class MatrixCodeView {
 private: 
 	std::string trailA = "abcdefghijklm";
@@ -119,7 +120,7 @@ public:
 	MatrixCodeView(const MatrixCodeModel& _mcm) : mcm(_mcm) { Initialise();  };
 	
 	void Initialise()
-	{	// pre-generate strings, much fasters than per each character
+	{	// pre-generate strings so we used less rand()
 		trailA = GenerateString(trailA);
 		trailB = GenerateString(trailB);
 		trailC = GenerateString(trailC);
@@ -222,10 +223,6 @@ MatrixCodeStaticView staticLines[staticLinesMax];
 
 bool IsLegalUnsignedChar(unsigned char _c)
 {
-	unsigned char illegal[] = { 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 
-		139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155,
-		156, 157, 158, 159 };
-
 	for (unsigned char i : illegal)
 		if (i == _c) return false;
 	
