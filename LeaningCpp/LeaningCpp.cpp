@@ -163,6 +163,7 @@ public:
 		speed = (RandomInt() % 4) + 3;
 		//column = RandomInt() % screenColums - (lineLengthMax / 2); // the columns cannot be random, use an index from the constructor
 		entrophy = lineLengthMax + (RandomInt() % 12);
+		// entrophy probablistics short/medium/long
 		return;
 	}
 	void Step()
@@ -254,8 +255,15 @@ void Initialise()
 		clr.append(space);
 	}
 
+	
+	
+
 	for (char i = 0; i < programLinesMax; i++) programLines[i] = MatrixCodeView(MatrixCodeModel());
-	for (char i = 0; i < staticLinesMax; i++) staticLines[i] = MatrixCodeStaticView(MatrixCodeStaticModel((short)i));
+	for (unsigned char i = 0; i < staticLinesMax; i++) { 
+		float fraction = (float)(screenColums / staticLinesMax);
+		short s = (short)(i * fraction);
+		staticLines[i] = MatrixCodeStaticView(MatrixCodeStaticModel(s));
+	};
 }
 
 void Draw()
