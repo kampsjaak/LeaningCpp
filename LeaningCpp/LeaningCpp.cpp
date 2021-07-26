@@ -23,6 +23,7 @@
 
 HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 COORD cursorPos = { 0, 0 };
+CONSOLE_CURSOR_INFO cursorInfo;
 
 class MatrixCodeView;
 class MatrixCodeModel;
@@ -156,13 +157,13 @@ public:
 	short entrophy = 0;
 	short speed = 0;
 	MatrixCodeStaticModel() {};
-	MatrixCodeStaticModel(const short& _column) : column(_column) { ReRoll(true); }
-	void ReRoll(bool init)
+	MatrixCodeStaticModel(const short& _column) : column(_column) { }
+	void ReRoll(bool roll)
 	{
 		row = RandomInt() % screenRows;
 		speed = (RandomInt() % 4) + 3;
-		//column = RandomInt() % screenColums - (lineLengthMax / 2); // the columns cannot be random, use an index from the constructor
-		entrophy = lineLengthMax + (RandomInt() % 12);
+		if (roll) entrophy = RandomInt() % 30;
+		else entrophy = lineLengthMax + (RandomInt() % 12) + 12;
 		// entrophy probablistics short/medium/long
 		return;
 	}
@@ -175,6 +176,9 @@ public:
 
 class MatrixCodeStaticView {
 private:
+	bool highLight = false;
+	unsigned char highLightIndex = 0;
+	char highLightCountDown = 0;
 	std::string trail = "abcdefghijklm";
 public:
 	MatrixCodeStaticModel mcsm;
@@ -192,7 +196,22 @@ public:
 		{
 			if (mcsm.entrophy > i && i < tLen) strOut[0] = trail.at(i);
 			else strOut[0] = space.at(0);
-			SetConsoleTextAttribute(hConsole, GREEN);
+			
+			if (highLight && highLightCountDown == tick) highLight = false;
+			if (5 == i + (tick % 20) + mcsm.entrophy)
+			{
+				highLight = true; 
+				highLightIndex = i; 
+				highLightCountDown = tick + 10;
+			}			
+			if (highLight && i == highLightIndex) 
+			{ 
+				SetConsoleTextAttribute(hConsole, WHITE);
+			}
+			else
+			{
+				SetConsoleTextAttribute(hConsole, GREEN);
+			}
 			PrintChar(mcsm.column, mcsm.row - i, ptrOut);
 		}
 	}
@@ -245,6 +264,11 @@ std::string GetRandomChar()
 void Initialise()
 {
 	srand((unsigned int)time(NULL)); // sets the seed for RNG
+	
+	cursorInfo.dwSize = 100;
+	cursorInfo.bVisible = FALSE;
+	SetConsoleCursorInfo(hConsole, &cursorInfo);
+
 	for (int r : randomArray)
 	{
 		r = rand();
@@ -254,9 +278,6 @@ void Initialise()
 	{
 		clr.append(space);
 	}
-
-	
-	
 
 	for (char i = 0; i < programLinesMax; i++) programLines[i] = MatrixCodeView(MatrixCodeModel());
 	for (unsigned char i = 0; i < staticLinesMax; i++) { 
@@ -275,13 +296,11 @@ void Draw()
 		mcsv.mcsm.Step();
 	}
 	// foreground
-	//for (MatrixCodeView& mcv : programLines)
-	//{
-	//	mcv.Draw();
-	//	mcv.mcm.Step();
-	//}
-
-
+	for (MatrixCodeView& mcv : programLines)
+	{
+		mcv.Draw();
+		mcv.mcm.Step();
+	}
 
 	SetConsoleCursorPosition(hConsole, cursorPos);
 }
