@@ -33,7 +33,7 @@ class MatrixCodeStaticModel;
 const unsigned char programLinesMax = 20;
 const unsigned char staticLinesMax = 35;
 const unsigned char lineLengthMin = 5;
-const unsigned char lineLengthMax = 10;
+const unsigned char lineLengthMax = 21;
 const unsigned char illegal[] = { 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138,
 		139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155,
 		156, 157, 158, 159 };
@@ -51,6 +51,7 @@ int randomArray[10];
 int temp;
 
 std::string GetRandomChar();
+short ColumnContainsStaticLine(short _col);
 
 int RandomInt()
 {
@@ -90,67 +91,6 @@ std::string GenerateString(std::string& _str)
 	return newStr;
 }
 
-class MatrixCodeModel {
-public:
-	short column;
-	short row = RandomInt() % screenRows;
-	MatrixCodeModel() { ReRoll(true); }
-	void ReRoll(bool init)
-	{
-		int random = RandomInt();
-		column = random % screenColums;
-		if(!init) row = -(lineLengthMax + (random % lineLengthMax));
-	}
-	void Step()
-	{
-		if (row > screenRows) ReRoll(false);
-		else row++;
-	}
-};
-
-class MatrixCodeView {
-private: 
-	std::string trailA = "abcdefghijklm";
-	std::string trailB = "abcdefghijklm";
-	std::string trailC = "abcdefghijklm";
-	std::string trailD = "abcdefghijklm";
-public:
-	MatrixCodeModel mcm;
-	MatrixCodeView() {};
-	MatrixCodeView(const MatrixCodeModel& _mcm) : mcm(_mcm) { Initialise();  };
-	
-	void Initialise()
-	{	// pre-generate strings so we used less rand()
-		trailA = GenerateString(trailA);
-		trailB = GenerateString(trailB);
-		trailC = GenerateString(trailC);
-		trailD = GenerateString(trailD);
-	}
-	void Draw()
-	{
-		char n = tick % 4;
-		std::string local[4] = { trailA, trailB, trailC, trailD };
-		unsigned char strLength = (unsigned char)local[n].length();
-		char half = (char)round(strLength / 2);
-		
-		std::string empty = " ";
-		strOut[0] = empty.at(0);
-		PrintChar(mcm.column, mcm.row - 1, ptrOut);
-
-		for (char i = strLength - 1; i >= 0; i--)
-		{
-			if (mcm.row + i < 0 || mcm.row + i > screenRows) continue;
-			
-			strOut[0] = local[n].at(i);
-			if(i == strLength - 1) SetConsoleTextAttribute(hConsole, WHITE);
-			else if(i == strLength - 2) SetConsoleTextAttribute(hConsole, CYAN);
-			else SetConsoleTextAttribute(hConsole, LIGHTGREEN);
-			
-			PrintChar(mcm.column, mcm.row + i, ptrOut);
-		}
-	}
-};
-
 class MatrixCodeStaticModel {
 public:
 	short column = 0;
@@ -182,6 +122,7 @@ private:
 	char highLightCountDown = 0;
 	std::string trail = "abcdefghijklm";
 public:
+	bool updateDraw = true;
 	MatrixCodeStaticModel mcsm;
 	MatrixCodeStaticView() {};
 	MatrixCodeStaticView(const MatrixCodeStaticModel& _mcsm) : mcsm(_mcsm) { Initialise();  };
@@ -192,10 +133,11 @@ public:
 	}
 	void Draw()
 	{
-		size_t tLen = trail.length();
-		for(unsigned char i = 0; i < tLen; i++)
+		if (!updateDraw) return;
+
+		for(unsigned char i = 0; i < trail.length(); i++)
 		{
-			if (mcsm.entrophy > i && i < tLen) strOut[0] = trail.at(i);
+			if (mcsm.entrophy > i && i < trail.length()) strOut[0] = trail.at(i);
 			else strOut[0] = space.at(0);
 			
 			if (highLight && highLightCountDown == tick) highLight = false;
@@ -205,21 +147,85 @@ public:
 				highLightIndex = i; 
 				highLightCountDown = tick + 10;
 			}			
-			if (highLight && i == highLightIndex) 
-			{ 
-				SetConsoleTextAttribute(hConsole, WHITE);
-			}
-			else
-			{
-				SetConsoleTextAttribute(hConsole, GREEN);
-			}
+			if (highLight && i == highLightIndex) SetConsoleTextAttribute(hConsole, WHITE);
+			else SetConsoleTextAttribute(hConsole, GREEN);
+			
 			PrintChar(mcsm.column, mcsm.row - i, ptrOut);
 		}
 	}
 };
 
-MatrixCodeView programLines[programLinesMax];
 MatrixCodeStaticView staticLines[staticLinesMax];
+
+class MatrixCodeModel {
+private:
+	short disabledStaticLineIndex = -1;
+public:
+	short column;
+	short row = RandomInt() % screenRows;
+	MatrixCodeModel() { ReRoll(true); }
+	void ReRoll(bool init)
+	{
+		if (disabledStaticLineIndex > 0) staticLines[disabledStaticLineIndex].updateDraw = true;
+
+		int random = RandomInt();
+		column = random % screenColums;
+		if (!init) row = -(lineLengthMax + (random % lineLengthMax));
+
+		disabledStaticLineIndex = ColumnContainsStaticLine(column);
+		if (disabledStaticLineIndex > 0) staticLines[disabledStaticLineIndex].updateDraw = false;
+	}
+	void Step()
+	{
+		if (row > screenRows) ReRoll(false);
+		else row++;
+	}
+};
+
+class MatrixCodeView {
+private:
+	std::string trailA = "abcdefghijklmnopqrstu";
+	std::string trailB = "abcdefghijklmnopqrstu";
+	std::string trailC = "abcdefghijklmnopqrstu";
+	std::string trailD = "abcdefghijklmnopqrstu";
+public:
+	MatrixCodeModel mcm;
+	MatrixCodeView() {};
+	MatrixCodeView(const MatrixCodeModel& _mcm) : mcm(_mcm) { Initialise(); };
+
+	void Initialise()
+	{	// pre-generate strings so we used less rand()
+		trailA = GenerateString(trailA);
+		trailB = GenerateString(trailB);
+		trailC = GenerateString(trailC);
+		trailD = GenerateString(trailD);
+	}
+	void Draw()
+	{
+		char n = tick % 4;
+		std::string local[4] = { trailA, trailB, trailC, trailD };
+		unsigned char strLength = (unsigned char)local[n].length();
+		char half = (char)round(strLength / 2);
+
+		std::string empty = " ";
+		strOut[0] = empty.at(0);
+		PrintChar(mcm.column, mcm.row - 1, ptrOut);
+
+		for (char i = strLength - 1; i >= 0; i--)
+		{
+			if (mcm.row + i < 0 || mcm.row + i > screenRows) continue;
+
+			strOut[0] = local[n].at(i);
+			if (i == strLength - 1) SetConsoleTextAttribute(hConsole, WHITE);
+			else if (i == strLength - 2) SetConsoleTextAttribute(hConsole, CYAN);
+			else SetConsoleTextAttribute(hConsole, LIGHTGREEN);
+
+			PrintChar(mcm.column, mcm.row + i, ptrOut);
+		}
+	}
+};
+
+MatrixCodeView programLines[programLinesMax];
 
 bool IsLegalUnsignedChar(unsigned char _c)
 {
@@ -227,6 +233,15 @@ bool IsLegalUnsignedChar(unsigned char _c)
 		if (i == _c) return false;
 	
 	return true;
+}
+
+short ColumnContainsStaticLine(short _col)
+{
+	for (unsigned char i = 0; i < staticLinesMax; i++)
+	{
+		if (staticLines[i].mcsm.column == _col) return i;
+	}
+	return -1;
 }
 
 std::string GetRandomChar()
@@ -255,24 +270,22 @@ void Initialise()
 		clr.append(space);
 	}
 
-	for (char i = 0; i < programLinesMax; i++) programLines[i] = MatrixCodeView(MatrixCodeModel());
 	for (unsigned char i = 0; i < staticLinesMax; i++) { 
 		float fraction = (float)(screenColums / staticLinesMax);
 		short s = (short)(i * fraction);
 		staticLines[i] = MatrixCodeStaticView(MatrixCodeStaticModel(s));
 	};
+	for (char i = 0; i < programLinesMax; i++) programLines[i] = MatrixCodeView(MatrixCodeModel());
 }
 
 void Draw()
 {
-	// background
-	for (MatrixCodeStaticView& mcsv : staticLines)
+	for (MatrixCodeStaticView& mcsv : staticLines) // background
 	{
 		mcsv.Draw();
 		mcsv.mcsm.Step();
 	}
-	// foreground
-	for (MatrixCodeView& mcv : programLines)
+	for (MatrixCodeView& mcv : programLines) // foreground
 	{
 		mcv.Draw();
 		mcv.mcm.Step();
